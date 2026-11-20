@@ -11,6 +11,7 @@ const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
+const { execSync } = require('child_process');
 
 if (typeof globalThis.WebSocket !== 'function') {
     console.error('[theme-daemon] Node.js >= 22 with built-in WebSocket is required.');
@@ -69,7 +70,15 @@ function log(msg) {
 }
 
 function isPidAlive(pid) {
+    if (!pid || pid === process.pid) return false;
     try {
+        if (process.platform === 'win32') {
+            const out = execSync(`tasklist /FI "PID eq ${pid}" /FO CSV /NH`, {
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'ignore'],
+            });
+            return out.toLowerCase().includes('node.exe');
+        }
         process.kill(pid, 0);
         return true;
     } catch (_) {
@@ -141,17 +150,21 @@ function buildInjectedSource() {
 }
 
 function getPortInfo() {
-    const portFile = resolvePortFile();
-    if (!fs.existsSync(portFile)) return null;
-    const lines = fs
-        .readFileSync(portFile, 'utf8')
-        .trim()
-        .split(/\r?\n/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-    const port = parseInt(lines[0], 10);
-    if (!Number.isFinite(port) || port <= 0) return null;
-    return { port, token: lines[1] || '' };
+    try {
+        const portFile = resolvePortFile();
+        if (!fs.existsSync(portFile)) return null;
+        const lines = fs
+            .readFileSync(portFile, 'utf8')
+            .trim()
+            .split(/\r?\n/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        const port = parseInt(lines[0], 10);
+        if (!Number.isFinite(port) || port <= 0) return null;
+        return { port, token: lines[1] || '' };
+    } catch (_) {
+        return null;
+    }
 }
 
 function fetchJson(url) {
@@ -348,6 +361,13 @@ function shutdown(signal) {
     removePidLock();
     process.exit(0);
 }
+
+process.on('uncaughtException', (err) => {
+    log(`Uncaught exception: ${err ? (err.stack || err.message) : err}`);
+});
+process.on('unhandledRejection', (reason) => {
+    log(`Unhandled rejection: ${reason}`);
+});
 
 acquirePidLock();
 process.on('SIGINT', () => shutdown('SIGINT'));

@@ -71,6 +71,10 @@ function removeAutoStart() {
             fs.unlinkSync(lnk);
             console.log(`[uninstall] Removed Windows Startup shortcut: ${lnk}`);
         }
+        try {
+            execSync('reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "AntigravityCustomTheme" /f', { stdio: 'ignore' });
+            console.log('[uninstall] Removed registry auto-start: HKCU\\...\\Run\\AntigravityCustomTheme');
+        } catch (_) {}
         if (fs.existsSync(VBS_FILE)) {
             fs.unlinkSync(VBS_FILE);
             console.log(`[uninstall] Removed helper script: ${VBS_FILE}`);

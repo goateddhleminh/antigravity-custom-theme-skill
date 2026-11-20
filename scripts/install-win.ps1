@@ -75,7 +75,7 @@ foreach ($SearchDir in $ShortcutSearchDirs) {
     Get-ChildItem -Path $SearchDir -Recurse -Filter '*.lnk' -ErrorAction SilentlyContinue | ForEach-Object {
         try {
             $Sc = $WshShell.CreateShortcut($_.FullName)
-            if ($Sc.TargetPath -and ($Sc.TargetPath -imatch '\\Antigravity\.exe$')) {
+            if ($Sc.TargetPath -and ($Sc.TargetPath -imatch '\\Antigravity(\s+IDE)?\.exe$')) {
                 if ($Sc.Arguments -notmatch '--remote-debugging-port') {
                     $Sc.Arguments = ("$($Sc.Arguments) --remote-debugging-port=0").Trim()
                     $Sc.Save()
@@ -99,10 +99,23 @@ if (-not $NoStartup) {
     $Shortcut.Description = 'Antigravity Custom Theme Daemon'
     $Shortcut.Save()
     Write-Host "[install-win] Startup shortcut created: $ShortcutPath"
+
+    try {
+        $RegPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+        Set-ItemProperty -Path $RegPath -Name 'AntigravityCustomTheme' -Value "wscript.exe `"$VbsPath`"" -Type String
+        Write-Host "[install-win] Auto-start registry configured: HKCU\...\Run\AntigravityCustomTheme"
+    } catch {
+        Write-Warning "[install-win] Could not write to HKCU Run key: $_"
+    }
 }
 
-Write-Host "[install-win] Launching daemon via wscript.exe..."
-Start-Process -FilePath 'wscript.exe' -ArgumentList """$VbsPath""" -WorkingDirectory $RepoRoot
+Write-Host "[install-win] Launching daemon detached via WMI..."
+try {
+    $ProcessClass = [wmiclass]"Win32_Process"
+    $null = $ProcessClass.Create("wscript.exe `"$VbsPath`"", $RepoRoot, $null)
+} catch {
+    Start-Process -FilePath 'wscript.exe' -ArgumentList """$VbsPath""" -WorkingDirectory $RepoRoot
+}
 
 for ($i = 0; $i -lt 15; $i++) {
     Start-Sleep -Milliseconds 250

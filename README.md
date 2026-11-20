@@ -78,7 +78,8 @@ The daemon monitors `dist/theme_payload.js` and automatically hot-reloads Antigr
 powershell -ExecutionPolicy Bypass -File scripts/install-win.ps1
 ```
 
-- Creates a silent background shortcut in your Windows Startup folder (`AntigravityCustomTheme.lnk`).
+- Registers dual persistent auto-start (Windows Startup folder + `HKCU\...\Run` registry key) so the daemon is always active on Windows logon.
+- Launches the daemon detached via WMI so it survives Antigravity app restarts and process crashes.
 - Automatically patches your Antigravity shortcuts with `--remote-debugging-port=0` if needed.
 - Pass `-NoStartup` if you only want to test in the current session.
 
