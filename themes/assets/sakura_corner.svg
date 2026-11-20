@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <defs>
+    <linearGradient id="sakuraBranch" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <path d="M 3 28 L 3 10 Q 3 3 10 3 L 28 3" stroke="url(#sakuraBranch)" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 7 20 L 7 11 Q 7 7 11 7 L 20 7" stroke="#fbcfe8" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="10" cy="10" r="2.5" fill="#f43f5e" opacity="0.85"/>
+  <circle cx="10" cy="10" r="1.2" fill="#fef08a"/>
+  <ellipse cx="10" cy="6" rx="2" ry="3.2" fill="#fbcfe8" opacity="0.9"/>
+  <ellipse cx="10" cy="14" rx="2" ry="3.2" fill="#fbcfe8" opacity="0.9"/>
+  <ellipse cx="6" cy="10" rx="3.2" ry="2" fill="#fbcfe8" opacity="0.9"/>
+  <ellipse cx="14" cy="10" rx="3.2" ry="2" fill="#fbcfe8" opacity="0.9"/>
+  <circle cx="31" cy="4" r="1.5" fill="#f472b6" opacity="0.9"/>
+  <circle cx="4" cy="31" r="1.5" fill="#818cf8" opacity="0.85"/>
+</svg>

@@ -21,6 +21,7 @@
 | `bgPosition` | css background-position | Optional | Focal point alignment (`"center center"`, `"center 20%"`, etc.) |
 | `pureBg` | css background | Optional | Pure-CSS multi-layer gradient used when `wallpaper` is `""` |
 | `wallpaper` | string | Yes | Relative asset path (`"assets/foo.webp"`), `data:` URI, or `""` for CSS-only |
+| `videoWallpaper` | string | Optional | Relative path to MP4/WebM (`"assets/foo.mp4"`) for 60fps hardware-accelerated animated wallpaper |
 | `sidebarBg` | rgba string | Yes | Left navigation rail tint |
 | `sidebarBlur` | string | Optional | Passed only to offscreen pre-baked texture sampler (`syncPrebakedGlass`) — never applied as live CSS `backdrop-filter` |
 | `sidebarHoverBg` | rgba string | Yes | Hover highlight on sidebar conversation rows |

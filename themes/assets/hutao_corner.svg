@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <defs>
+    <linearGradient id="htGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#b91c1c" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <path d="M 3 28 L 3 10 Q 3 3 10 3 L 28 3" stroke="url(#htGrad)" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 7 20 L 7 11 Q 7 7 11 7 L 20 7" stroke="#fca5a5" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/>
+  <!-- Pyro Butterfly at Corner -->
+  <g transform="translate(13, 13) rotate(-25)">
+    <ellipse cx="-4" cy="-3" rx="4.5" ry="3" fill="#f87171" opacity="0.9"/>
+    <ellipse cx="4" cy="-3" rx="4.5" ry="3" fill="#f87171" opacity="0.9"/>
+    <ellipse cx="-3" cy="3" rx="3.5" ry="2.2" fill="#fbbf24" opacity="0.85"/>
+    <ellipse cx="3" cy="3" rx="3.5" ry="2.2" fill="#fbbf24" opacity="0.85"/>
+    <circle cx="0" cy="0" r="1.5" fill="#fef08a"/>
+  </g>
+  <circle cx="31" cy="4" r="1.5" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="4" cy="31" r="1.5" fill="#ef4444" opacity="0.85"/>
+</svg>

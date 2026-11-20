@@ -16,7 +16,7 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-ASSET_KEYS = ("wallpaper", "sticker", "cornerSvg", "userAvatar", "agentAvatar")
+ASSET_KEYS = ("wallpaper", "sticker", "cornerSvg", "userAvatar", "agentAvatar", "videoWallpaper")
 AVATAR_KEYS = {"userAvatar", "agentAvatar"}
 AVATAR_MAX_DIM = 256
 PLACEHOLDER = "/*__THEMES_PLACEHOLDER__*/{}"
@@ -27,6 +27,12 @@ WEBP_QUALITY = 88
 def encode_svg(svg_path: Path) -> str:
     svg_text = svg_path.read_text(encoding="utf-8")
     return "data:image/svg+xml," + urllib.parse.quote(svg_text)
+
+
+def encode_video(video_path: Path) -> str:
+    raw = video_path.read_bytes()
+    mime = "video/webm" if video_path.suffix.lower() == ".webm" else "video/mp4"
+    return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
 
 
 def encode_raster(img_path: Path, max_dim: int) -> str:
@@ -92,6 +98,8 @@ def resolve_asset_value(value: object, themes_dir: Path, max_dim: int) -> object
 
     if asset_path.suffix.lower() == ".svg":
         return encode_svg(asset_path)
+    if asset_path.suffix.lower() in (".mp4", ".m4v", ".webm"):
+        return encode_video(asset_path)
     return encode_raster(asset_path, max_dim)
 
 

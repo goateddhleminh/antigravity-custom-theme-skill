@@ -133,6 +133,109 @@
     img.src = wpUrl;
   }
 
+  window.__AGY_VIDEO_CACHE__ = window.__AGY_VIDEO_CACHE__ || {};
+
+  function base64ToBlobUrl(dataUri) {
+    if (!dataUri) return '';
+    if (dataUri.startsWith('blob:')) return dataUri;
+    if (window.__AGY_VIDEO_CACHE__[dataUri]) {
+      return window.__AGY_VIDEO_CACHE__[dataUri];
+    }
+    try {
+      const commaIdx = dataUri.indexOf(',');
+      const base64 = commaIdx >= 0 ? dataUri.slice(commaIdx + 1) : dataUri;
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'video/mp4' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.__AGY_VIDEO_CACHE__[dataUri] = blobUrl;
+      return blobUrl;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  let isWindowFocused = true;
+  try {
+    isWindowFocused = !document.hidden && (!document.hasFocus || document.hasFocus());
+  } catch (e) {}
+
+  function isWindowActive() {
+    if (typeof document.hidden === 'boolean' && document.hidden) return false;
+    if (!isWindowFocused) return false;
+    if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false;
+    return true;
+  }
+
+  function syncVideoPlaybackState(forcePause = false) {
+    const v = document.getElementById('agy-custom-theme-video-bg');
+    if (!v) return;
+    if (!forcePause && isWindowActive()) {
+      if (v.paused) {
+        v.play().catch(() => {});
+      }
+    } else {
+      if (!v.paused) {
+        v.pause();
+      }
+    }
+  }
+
+  function syncVideoWallpaper(videoDataUri, enabled, bgPosition) {
+    const shell = document.querySelector('.agy-shell');
+    if (!shell) return;
+
+    let videoEl = document.getElementById('agy-custom-theme-video-bg');
+    let scrimEl = document.getElementById('agy-custom-theme-video-scrim');
+
+    if (!enabled || !videoDataUri) {
+      if (videoEl) {
+        try { videoEl.pause(); } catch (_) {}
+        videoEl.remove();
+      }
+      if (scrimEl) scrimEl.remove();
+      return;
+    }
+
+    const blobUrl = base64ToBlobUrl(videoDataUri);
+    if (!blobUrl) return;
+
+    if (!videoEl) {
+      videoEl = document.createElement('video');
+      videoEl.id = 'agy-custom-theme-video-bg';
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      shell.insertBefore(videoEl, shell.firstChild);
+    }
+
+    if (!scrimEl) {
+      scrimEl = document.createElement('div');
+      scrimEl.id = 'agy-custom-theme-video-scrim';
+      shell.insertBefore(scrimEl, videoEl.nextSibling);
+    }
+
+    if (bgPosition) {
+      videoEl.style.objectPosition = bgPosition;
+    }
+
+    if (videoEl.dataset.agySrc !== videoDataUri) {
+      videoEl.dataset.agySrc = videoDataUri;
+      videoEl.src = blobUrl;
+      videoEl.load();
+      if (isWindowActive()) {
+        videoEl.play().catch(() => {});
+      }
+    } else {
+      syncVideoPlaybackState();
+    }
+  }
+
   function applyTheme(overrides = {}) {
     const st = { ...getState(), ...overrides };
     try {
@@ -170,6 +273,7 @@
     const mainTheme = THEMES[st.themeName] || THEMES[DEFAULT_THEME_KEY];
     const bubbleTheme = THEMES[st.bubbleName] || mainTheme;
     const wpUrl = st.customWp || mainTheme.wallpaper || '';
+    const videoUrl = st.customWp ? '' : (mainTheme.videoWallpaper || '');
 
     const oldLegacy = document.getElementById('antigravity-ho-ly-chibi-theme');
     if (oldLegacy) oldLegacy.remove();
@@ -190,6 +294,10 @@
       ? `, radial-gradient(circle at 22% 72%, ${mainTheme.secondaryGlow} 0%, transparent 55%)`
       : '';
 
+    const scrimBg = mainTheme.clearBackdrop
+      ? `linear-gradient(180deg, rgba(${overlayRgb}, ${overlayAlpha}) 0%, rgba(${overlayRgb}, ${overlayAlpha}) 100%)`
+      : `radial-gradient(circle at 75% 40%, ${mainTheme.glow} 0%, transparent 65%)${secondaryGlowStop}, linear-gradient(180deg, rgba(${overlayRgb}, ${overlayAlpha * 0.85}) 0%, rgba(${overlayRgb}, ${overlayAlpha}) 100%)`;
+
     let bgLayers = '';
     if (wpUrl) {
       bgLayers = mainTheme.clearBackdrop
@@ -201,6 +309,7 @@
 
     const wpCss = st.wpEnabled ? `
       .agy-shell {
+        position: relative !important;
         background-image: ${bgLayers} !important;
         background-size: cover !important;
         background-position: ${bgPosition} !important;
@@ -225,6 +334,29 @@
         background-color: transparent !important;
         background-image: none !important;
       }
+      #agy-custom-theme-video-bg {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: ${bgPosition} !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+      }
+      #agy-custom-theme-video-scrim {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+        background: ${scrimBg} !important;
+      }
+      .agy-shell > :not(#agy-custom-theme-video-bg):not(#agy-custom-theme-video-scrim):not(style) {
+        position: relative;
+        z-index: 1;
+      }
       /* Browser split-pane hole cutout: keep wallpaper & L-glass visible outside [data-browser-hole] without covering live BrowserView */
       body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"]::after {
         content: "";
@@ -239,7 +371,11 @@
         clip-path: var(--agy-hole-clip, none);
         will-change: transform;
       }
-      body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] > :not([data-has-browser-hole="true"]):not([data-browser-hole]:not([data-browser-hole="false"])):not(.settings-modal-container),
+      body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] #agy-custom-theme-video-bg,
+      body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] #agy-custom-theme-video-scrim {
+        clip-path: var(--agy-hole-clip, none) !important;
+      }
+      body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] > :not([data-has-browser-hole="true"]):not([data-browser-hole]:not([data-browser-hole="false"])):not(.settings-modal-container):not(#agy-custom-theme-video-bg):not(#agy-custom-theme-video-scrim),
       body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] .browser-hole-opaque:not([data-has-browser-hole="true"]),
       body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] [data-pane-id]:not([data-has-browser-hole="true"]),
       body[data-has-browser-hole="true"] .agy-shell[data-agy-hole-active="1"] [data-tiling-pane]:not([data-has-browser-hole="true"]),
@@ -883,10 +1019,155 @@
       #agy-custom-theme-sidebar-btn svg {
         color: ${mainTheme.primary} !important;
       }
+
+      /* Cascading Ink-Stream Reveal for Messages (Claude fluid text waterfall) */
+      @keyframes agyClaudeInkStream {
+        0% {
+          opacity: 0;
+          transform: translateY(12px);
+          filter: blur(5px);
+          clip-path: inset(0 35% 0 0);
+        }
+        60% {
+          opacity: 0.85;
+          filter: blur(1px);
+          clip-path: inset(0 5% 0 0);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+          clip-path: inset(0 0 0 0);
+        }
+      }
+
+      @keyframes agyClaudeUserEntry {
+        0% {
+          opacity: 0;
+          transform: translateY(12px) scale(0.985);
+          filter: blur(2px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      .group\\/user-input-step {
+        animation: agyClaudeUserEntry 0.38s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+      }
+
+      .agy-shell [data-testid="agent-response"] {
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11" !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+      }
+
+      .agy-shell [data-testid="agent-response"] :is(p, ul, ol, blockquote, h1, h2, h3, h4) {
+        line-height: 1.72 !important;
+        letter-spacing: -0.011em !important;
+        animation: agyClaudeInkStream 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      /* Staggered sequential flow: each paragraph glides in smoothly one after another */
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(1) { animation-delay: 0.04s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(2) { animation-delay: 0.16s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(3) { animation-delay: 0.28s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(4) { animation-delay: 0.40s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(5) { animation-delay: 0.52s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(6) { animation-delay: 0.64s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(7) { animation-delay: 0.76s; }
+      .agy-shell [data-testid="agent-response"] p:nth-of-type(8) { animation-delay: 0.88s; }
+
+      .agy-shell [data-testid="agent-response"] p {
+        margin-bottom: 0.85em !important;
+      }
+
+      .agy-shell .overflow-y-auto {
+        scroll-behavior: smooth !important;
+      }
+
+      /* Overriding Antigravity's default word streaming animation for authentic Claude-style Typewriter Flow */
+      @keyframes fade-in {
+        0% {
+          opacity: 0;
+          transform: translateY(6px) scale(0.96);
+          filter: blur(2.5px);
+        }
+        50% {
+          opacity: 0.85;
+          filter: blur(0.8px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      .agy-shell [data-testid="agent-response"] span[style*="fade-in"] {
+        display: inline-block !important;
+        white-space: pre-wrap !important;
+        will-change: transform, opacity, filter !important;
+      }
+
+      @keyframes agyTypewriterCursor {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+          box-shadow: 0 0 8px ${mainTheme.primary || '#fb7185'};
+        }
+        50% {
+          opacity: 0;
+          transform: scale(0.85);
+          box-shadow: none;
+        }
+      }
+
+      /* Glowing Claude Typewriter Cursor */
+      .agy-typewriter-cursor {
+        display: inline-block;
+        width: 6px;
+        height: 1.15em;
+        margin-left: 4px;
+        vertical-align: -0.15em;
+        background: ${mainTheme.primary || '#fb7185'};
+        border-radius: 2px;
+        animation: agyTypewriterCursor 0.75s ease-in-out infinite;
+      }
+
+      @keyframes agyStreamCursorPulse {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+          filter: drop-shadow(0 0 6px ${mainTheme.primary || '#fb7185'});
+        }
+        50% {
+          opacity: 0.25;
+          transform: scale(0.85);
+          filter: none;
+        }
+      }
+
+      .agy-shell [data-testid="agent-response"][data-agy-streaming="1"] .select-text p:last-child::after,
+      .agy-shell [data-testid="agent-response"][data-agy-streaming="1"] p:last-of-type::after {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 15px;
+        margin-left: 6px;
+        vertical-align: -2px;
+        background: ${mainTheme.primary || '#fb7185'};
+        border-radius: 2px;
+        animation: agyStreamCursorPulse 0.85s ease-in-out infinite;
+      }
     `;
 
     syncTitleBarOverlay(st);
     scheduleTitleBarSync(st);
+    syncVideoWallpaper(videoUrl, st.wpEnabled, bgPosition);
   }
 
   function syncTitleBarOverlay(stOverride) {
@@ -937,6 +1218,10 @@
       shell.style.removeProperty('--agy-hole-clip');
       shell.style.removeProperty('--agy-l-glass-bg');
     }
+    const vid = document.getElementById('agy-custom-theme-video-bg');
+    if (vid) { try { vid.pause(); } catch (_) {} vid.remove(); }
+    const scrim = document.getElementById('agy-custom-theme-video-scrim');
+    if (scrim) scrim.remove();
     if (window.electronNative && typeof window.electronNative.setTitleBarOverlay === 'function') {
       try {
         window.electronNative.setTitleBarOverlay({ color: '#111114', symbolColor: '#f8fafc' });
@@ -1677,11 +1962,65 @@
     syncShellMetrics();
   }
 
+  function syncStreamingState() {
+    const responses = document.querySelectorAll('[data-testid="agent-response"]');
+    responses.forEach(r => {
+      const h6 = r.querySelector('h6');
+      const isWorking = h6 && h6.textContent && h6.textContent.includes('Agent working');
+      if (isWorking) {
+        r.dataset.agyStreaming = '1';
+      } else if (r.dataset.agyStreaming) {
+        delete r.dataset.agyStreaming;
+      }
+    });
+  }
+
+  function syncTypewriterOnNewResponses() {
+    const responses = document.querySelectorAll('[data-testid="agent-response"]');
+    responses.forEach(r => {
+      const h6 = r.querySelector('h6');
+      const isWorking = h6 && h6.textContent && h6.textContent.includes('Agent working');
+      if (isWorking) return;
+
+      if (r.dataset.agyTypewritten) return;
+
+      const spans = r.querySelectorAll('span[style*="fade-in"]');
+      if (spans.length === 0) return;
+
+      r.dataset.agyTypewritten = '1';
+      const spanArr = Array.from(spans);
+      const stepMs = Math.max(12, Math.min(26, Math.round(3500 / spanArr.length)));
+
+      let cursor = r.querySelector('.agy-typewriter-cursor');
+      if (!cursor) {
+        cursor = document.createElement('span');
+        cursor.className = 'agy-typewriter-cursor';
+      }
+      const lastSpan = spanArr[spanArr.length - 1];
+      if (lastSpan && lastSpan.parentElement) {
+        lastSpan.parentElement.appendChild(cursor);
+      }
+
+      spanArr.forEach((sp, i) => {
+        sp.style.animation = 'none';
+        void sp.offsetHeight;
+        sp.style.animation = `0.28s cubic-bezier(0.16, 1, 0.3, 1) ${i * stepMs}ms 1 normal both running fade-in`;
+      });
+
+      setTimeout(() => {
+        if (cursor && cursor.parentElement) cursor.remove();
+      }, spanArr.length * stepMs + 650);
+    });
+  }
+
   function tick() {
     injectMainSidebarButton();
     injectSettingsModalButton();
     hookSidebarScroll();
     hookShellMetrics();
+    syncVideoPlaybackState();
+    syncStreamingState();
+    syncTypewriterOnNewResponses();
   }
 
   function scheduleTick() {
@@ -1706,9 +2045,24 @@
   }
   window.__AGY_SCROLL_AC__ = new AbortController();
   window.addEventListener('load', () => scheduleTitleBarSync(), { signal: window.__AGY_SCROLL_AC__.signal });
-  window.addEventListener('focus', () => syncTitleBarOverlay(), { signal: window.__AGY_SCROLL_AC__.signal });
+  window.addEventListener('focus', () => {
+    isWindowFocused = true;
+    syncTitleBarOverlay();
+    syncVideoPlaybackState(false);
+  }, { signal: window.__AGY_SCROLL_AC__.signal });
+  window.addEventListener('blur', () => {
+    isWindowFocused = false;
+    syncVideoPlaybackState(true);
+  }, { signal: window.__AGY_SCROLL_AC__.signal });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) syncTitleBarOverlay();
+    if (document.hidden) {
+      isWindowFocused = false;
+      syncVideoPlaybackState(true);
+    } else {
+      isWindowFocused = (typeof document.hasFocus === 'function') ? document.hasFocus() : true;
+      syncTitleBarOverlay();
+      syncVideoPlaybackState();
+    }
   }, { signal: window.__AGY_SCROLL_AC__.signal });
   document.querySelectorAll('[data-agy-scroll-bound]').forEach(el => delete el.dataset.agyScrollBound);
   document.querySelectorAll('[data-agy-tbo-mounted]').forEach(el => delete el.dataset.agyTboMounted);
@@ -1718,6 +2072,7 @@
   if (staleSidebarBtn) staleSidebarBtn.remove();
   const staleSettingsBtn = document.getElementById('agy-custom-theme-settings-btn');
   if (staleSettingsBtn) staleSettingsBtn.remove();
+  document.querySelectorAll('.surface-composer.agy-typing').forEach(el => el.classList.remove('agy-typing'));
 
   window.__AGY_HOLE_EL__ = null;
   if (window.__AGY_MODAL_OBSERVER__) {
@@ -1729,6 +2084,9 @@
     subtree: true,
     attributes: true,
     attributeFilter: ['data-has-browser-hole', 'data-browser-hole']
+  });
+  document.querySelectorAll('[data-testid="agent-response"]').forEach(r => {
+    r.dataset.agyTypewritten = '1';
   });
   tick();
 

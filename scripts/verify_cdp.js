@@ -112,6 +112,8 @@ const INSPECT_EXPR = `(() => {
     const liveBlurScrollers = scrollers.filter((el) => /blur\\(/i.test(getComputedStyle(el).backdropFilter || ''));
     const shellBackdrop = shellEl ? (getComputedStyle(shellEl).backdropFilter || 'none') : 'none';
     const hasLiveBlurRule = /blur\\(/i.test(shellBackdrop) || liveBlurScrollers.length > 0;
+    const composerPresent = Boolean(document.querySelector('div.relative.flex.flex-col.rounded-lg.border'));
+    const videoEl = document.getElementById('agy-custom-theme-video-bg');
     return {
         url: location.href,
         viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -119,6 +121,9 @@ const INSPECT_EXPR = `(() => {
         activeTheme: localStorage.getItem('agy_theme_v3') || null,
         shellFound: Boolean(shellEl),
         shellBgImagePresent: shellEl ? getComputedStyle(shellEl).backgroundImage !== 'none' : false,
+        videoPresent: Boolean(videoEl),
+        videoPlaying: videoEl ? !videoEl.paused : false,
+        videoDimensions: videoEl ? { w: videoEl.videoWidth, h: videoEl.videoHeight } : null,
         hasBrowserHole: document.body.dataset.hasBrowserHole || null,
         shellHoleActive: shellEl ? shellEl.getAttribute('data-agy-hole-active') : null,
         mainGridFound: Boolean(mainGrid),
@@ -128,7 +133,7 @@ const INSPECT_EXPR = `(() => {
         liveBlurScrollerCount: liveBlurScrollers.length,
         hasLiveBlurRule,
         settingsTriggerPresent: Boolean(document.getElementById('agy-custom-theme-sidebar-btn')),
-        composerPresent: Boolean(document.querySelector('div.relative.flex.flex-col.rounded-lg.border')),
+        composerPresent,
     };
 })()`;
 
