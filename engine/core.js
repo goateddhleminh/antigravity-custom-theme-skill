@@ -160,29 +160,64 @@
   }
 
   let isWindowFocused = true;
-  try {
-    isWindowFocused = !document.hidden && (!document.hasFocus || document.hasFocus());
-  } catch (e) {}
+  let blurTimer = null;
+  let lastUserActivity = Date.now();
 
   function isWindowActive() {
     if (typeof document.hidden === 'boolean' && document.hidden) return false;
-    if (!isWindowFocused) return false;
-    if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false;
-    return true;
+    return isWindowFocused;
   }
 
   function syncVideoPlaybackState(forcePause = false) {
     const v = document.getElementById('agy-custom-theme-video-bg');
     if (!v) return;
-    if (!forcePause && isWindowActive()) {
+    if (forcePause || !isWindowActive()) {
+      if (!v.paused) {
+        try { v.pause(); } catch (_) {}
+      }
+    } else {
       if (v.paused) {
         v.play().catch(() => {});
       }
+    }
+  }
+
+  function markWindowActive() {
+    lastUserActivity = Date.now();
+    if (blurTimer) {
+      clearTimeout(blurTimer);
+      blurTimer = null;
+    }
+    if (!isWindowFocused) {
+      isWindowFocused = true;
+      syncTitleBarOverlay();
+      syncVideoPlaybackState(false);
     } else {
-      if (!v.paused) {
-        v.pause();
+      const v = document.getElementById('agy-custom-theme-video-bg');
+      if (v && v.paused && isWindowActive()) {
+        v.play().catch(() => {});
       }
     }
+  }
+
+  function scheduleWindowBlur() {
+    if (blurTimer) clearTimeout(blurTimer);
+    blurTimer = setTimeout(() => {
+      blurTimer = null;
+      if (document.hidden) {
+        isWindowFocused = false;
+        syncVideoPlaybackState(true);
+        return;
+      }
+      if (typeof document.hasFocus === 'function' && document.hasFocus()) {
+        return;
+      }
+      if (Date.now() - lastUserActivity < 800) {
+        return;
+      }
+      isWindowFocused = false;
+      syncVideoPlaybackState(true);
+    }, 450);
   }
 
   function syncVideoWallpaper(videoDataUri, enabled, bgPosition) {
@@ -207,6 +242,10 @@
     if (!videoEl) {
       videoEl = document.createElement('video');
       videoEl.id = 'agy-custom-theme-video-bg';
+      videoEl.setAttribute('autoplay', '');
+      videoEl.setAttribute('loop', '');
+      videoEl.setAttribute('muted', '');
+      videoEl.setAttribute('playsinline', '');
       videoEl.autoplay = true;
       videoEl.loop = true;
       videoEl.muted = true;
@@ -224,15 +263,39 @@
       videoEl.style.objectPosition = bgPosition;
     }
 
+    const startPlayback = () => {
+      if (isWindowActive()) {
+        videoEl.play().catch(() => {});
+      }
+    };
+
     if (videoEl.dataset.agySrc !== videoDataUri) {
       videoEl.dataset.agySrc = videoDataUri;
       videoEl.src = blobUrl;
       videoEl.load();
-      if (isWindowActive()) {
-        videoEl.play().catch(() => {});
-      }
+      startPlayback();
+      videoEl.addEventListener('canplay', startPlayback, { once: true });
+      videoEl.addEventListener('loadeddata', startPlayback, { once: true });
     } else {
-      syncVideoPlaybackState();
+      startPlayback();
+    }
+  }
+
+  function ensureVideoWallpaperMounted() {
+    const st = getState();
+    if (!st.wpEnabled) return;
+    const mainTheme = THEMES[st.themeName] || THEMES[DEFAULT_THEME_KEY];
+    const videoUrl = st.customWp ? '' : (mainTheme ? mainTheme.videoWallpaper : '');
+    if (!videoUrl) return;
+
+    const shell = document.querySelector('.agy-shell');
+    if (!shell) return;
+
+    const videoEl = document.getElementById('agy-custom-theme-video-bg');
+    if (!videoEl || videoEl.dataset.agySrc !== videoUrl || !shell.contains(videoEl)) {
+      syncVideoWallpaper(videoUrl, st.wpEnabled, mainTheme.bgPosition || 'center center');
+    } else if (isWindowActive() && videoEl.paused) {
+      videoEl.play().catch(() => {});
     }
   }
 
@@ -2018,7 +2081,7 @@
     injectSettingsModalButton();
     hookSidebarScroll();
     hookShellMetrics();
-    syncVideoPlaybackState();
+    ensureVideoWallpaperMounted();
     syncStreamingState();
     syncTypewriterOnNewResponses();
   }
@@ -2044,26 +2107,29 @@
     try { window.__AGY_SCROLL_AC__.abort(); } catch (e) {}
   }
   window.__AGY_SCROLL_AC__ = new AbortController();
-  window.addEventListener('load', () => scheduleTitleBarSync(), { signal: window.__AGY_SCROLL_AC__.signal });
-  window.addEventListener('focus', () => {
-    isWindowFocused = true;
-    syncTitleBarOverlay();
-    syncVideoPlaybackState(false);
-  }, { signal: window.__AGY_SCROLL_AC__.signal });
-  window.addEventListener('blur', () => {
-    isWindowFocused = false;
-    syncVideoPlaybackState(true);
-  }, { signal: window.__AGY_SCROLL_AC__.signal });
+  const acSignal = window.__AGY_SCROLL_AC__.signal;
+
+  window.addEventListener('load', () => scheduleTitleBarSync(), { signal: acSignal });
+  window.addEventListener('focus', markWindowActive, { signal: acSignal });
+  window.addEventListener('blur', scheduleWindowBlur, { signal: acSignal });
+  window.addEventListener('pointerdown', markWindowActive, { signal: acSignal, passive: true });
+  window.addEventListener('mousedown', markWindowActive, { signal: acSignal, passive: true });
+  window.addEventListener('keydown', markWindowActive, { signal: acSignal, passive: true });
+  window.addEventListener('wheel', markWindowActive, { signal: acSignal, passive: true });
+  window.addEventListener('mousemove', () => {
+    if (Date.now() - lastUserActivity > 250) {
+      markWindowActive();
+    }
+  }, { signal: acSignal, passive: true });
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       isWindowFocused = false;
       syncVideoPlaybackState(true);
     } else {
-      isWindowFocused = (typeof document.hasFocus === 'function') ? document.hasFocus() : true;
-      syncTitleBarOverlay();
-      syncVideoPlaybackState();
+      markWindowActive();
     }
-  }, { signal: window.__AGY_SCROLL_AC__.signal });
+  }, { signal: acSignal });
   document.querySelectorAll('[data-agy-scroll-bound]').forEach(el => delete el.dataset.agyScrollBound);
   document.querySelectorAll('[data-agy-tbo-mounted]').forEach(el => delete el.dataset.agyTboMounted);
   const staleBackdrop = document.getElementById('agy-custom-theme-modal-backdrop');
