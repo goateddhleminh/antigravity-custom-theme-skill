@@ -1,217 +1,315 @@
-# Antigravity Custom Theme Skill
+<div align="center">
 
-Turn any static artwork, aesthetic mood, or **animated live wallpaper** into a high-performance, 60fps custom visual experience inside **Antigravity** — packaged as both a standalone cross-platform CDP theme engine and a drop-in **AI Agent Skill** (`SKILL.md`).
+# 🌌 Antigravity Custom Theme Engine
 
-> Transform your Antigravity IDE into an immersive workspace with live video wallpapers, smart background RAM auto-pause, Claude-style typewriter text streaming, and glassmorphic UI palettes — all without modifying application binaries.
+**Hardware-accelerated 60fps live animated wallpapers, zero-live-blur glassmorphic palettes, smart RAM auto-pause, and Claude-style typewriter streaming for the Antigravity IDE — with zero binary modifications.**
+
+[![Release Version](https://img.shields.io/badge/version-2.4.0-blue.svg?style=for-the-badge&logo=semver)](https://github.com/goateddhleminh/antigravity-custom-theme-skill/releases)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/goateddhleminh/antigravity-custom-theme-skill)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.0-339933.svg?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=for-the-badge&logo=windows)](https://github.com/goateddhleminh/antigravity-custom-theme-skill)
+
+<br />
+
+<img src="./assets/demo.gif" width="85%" alt="Antigravity Custom Theme Live Demo" />
+
+<br />
+
+[ 🚀 Quick Start ](#-frictionless-quick-start-60s-setup) &nbsp;•&nbsp;
+[ ✨ Core Features ](#-core-features) &nbsp;•&nbsp;
+[ 🏗️ Architecture ](#%EF%B8%8F-tech-stack--architecture) &nbsp;•&nbsp;
+[ 🎭 Presets ](#-included-theme-presets) &nbsp;•&nbsp;
+[ 🤖 AI Agent Skill ](#-use-as-an-antigravity-ai-skill) &nbsp;•&nbsp;
+[ 🐛 Report Bug ](https://github.com/goateddhleminh/antigravity-custom-theme-skill/issues)
+
+</div>
 
 ---
 
-## ✨ Features
+## 💡 Why Antigravity Custom Theme?
 
-- **🎬 Live Animated Video Wallpapers (60fps H.264 / WebM):**
-  - Hardware-accelerated HTML5 video wallpaper playback seamlessly integrated into the Antigravity shell.
-  - In-memory `Blob` + `URL.createObjectURL` streaming: safely bypasses Chromium HTTPS/file URL security constraints without CORS issues.
-  - Static WebP poster frame fallbacks for instantaneous rendering during launch.
+The Antigravity IDE provides an exceptional coding and reasoning environment, but ships with rigid default dark/light appearances and lacks native support for live video wallpapers, bespoke glassmorphic aesthetics, or streaming response animations. 
 
-- **⚡ Intelligent Background Auto-Pause (RAM & GPU Optimization):**
-  - **Zero Background Resource Waste:** The video engine automatically pauses playback (`video.pause()`) when you switch to another window, tab, or application (`window.blur`, `!document.hasFocus()`), or when Antigravity is minimized (`document.visibilitychange`).
-  - **Instant Seamless Resume:** Playback resumes instantly (`video.play()`) the moment focus returns to Antigravity (`window.focus`).
-  - Halts hardware video decoding and canvas re-draws while Antigravity is running in the background, freeing CPU/GPU cycles and keeping RAM usage minimal.
+Directly altering application binaries breaks auto-update mechanisms and violates integrity hashes. **Antigravity Custom Theme Engine** solves this by establishing a non-invasive, external Chrome DevTools Protocol (CDP) bridge that injects a self-contained, pre-baked rendering engine into the active IDE window in real time — surviving application restarts, system reboots, and official software updates seamlessly.
 
-- **🖋️ Claude-Style Typewriter Stream for AI Responses:**
-  - **Authentic Ink-Flow Cascade:** Newly generated response words float into place with a subtle vertical rise (`translateY: 6px -> 0`), optical blur settling (`blur: 2.5px -> 0`), and gentle scale transition.
-  - **Pulsing Accent Cursor:** A signature glowing typewriter cursor (`.agy-typewriter-cursor`) dynamically leads the active streaming stream and gently fades out upon completion.
-  - **Adaptive Cadence:** Automatically balances streaming delay (12ms – 25ms per word) for a natural, silky reading pace.
-  - **Zero DOM Disruption:** Preserves all Markdown syntax, clickable links, code blocks, tables, and KaTeX math formulas.
+---
 
-- **🚀 Zero Live Blur Architecture (True 60fps Scroll):**
-  - Avoids performance-degrading CSS `backdrop-filter: blur()` on scrolling containers.
-  - Uses pre-baked offscreen canvas textures (`syncPrebakedGlass`) and gradient scrims, ensuring butter-smooth 60fps/120fps scrolling even on large conversations.
+## ✨ Core Features
 
-- **🛡️ Split-Browser Safe (`data-has-browser-hole`):**
-  - Automatically senses Antigravity's split embedded Chromium view and cuts a clean `evenodd` `clip-path` window so web previews and devtools never get dimmed, tinted, or obscured.
-
-- **🎨 Live Interactive Settings Modal:**
-  - Switch presets on the fly, upload custom static wallpapers or custom User/Agent circular avatars, adjust background dimming, and persist preferences automatically to `theme_config.json`.
+- **🎬 60fps Hardware-Accelerated Live Wallpapers**: In-memory `Blob` + `URL.createObjectURL` video streaming pipeline that bypasses Chromium local file security boundaries without CORS issues. Bundles static WebP poster fallbacks for instant, flicker-free startup rendering.
+- **⚡ Intelligent Background Auto-Pause (RAM & GPU Saver)**: Zero idle resource waste. Automatically halts video decoding and GPU canvas repaints whenever Antigravity loses focus or is minimized, immediately reclaiming CPU/GPU resources and dropping background power consumption to near zero.
+- **🖋️ Claude-Style Typewriter Stream**: Words dynamically cascade into view with an organic vertical rise (`translateY: 6px → 0`), optical blur settling (`blur: 2.5px → 0`), and an ambient pulsing cursor (`.agy-typewriter-cursor`) — preserving Markdown, syntax highlighting, code blocks, tables, and KaTeX formulas.
+- **🛡️ Zero Live Blur Architecture (True 60fps Scroll)**: Eliminates performance-crippling CSS `backdrop-filter: blur()` on scrolling containers. Pre-bakes frosted glass textures via offscreen canvas buffers (`syncPrebakedGlass`) to guarantee smooth 60–120fps scrolling even in massive conversation histories.
+- **🪟 Split-Browser Safe Cutouts**: Dynamically inspects the DOM for Antigravity's embedded Chromium browser view (`data-has-browser-hole`) and carves an exact `evenodd` `clip-path` window so live web previews, devtools, and sidecar panes remain crystal clear.
+- **🔄 Detached Persistent Daemon & Hot Reload**: Operates independently of Antigravity's process tree via Windows WMI / macOS LaunchAgents / Linux systemd. Automatically senses `DevToolsActivePort`, re-injects on launch/restart, and hot-reloads themes whenever asset bundles are recompiled.
 
 ---
 
 ## 🎭 Included Theme Presets
 
-| Theme Name | Type | Description |
-| :--- | :---: | :--- |
-| **Reze Sakura Bloom** | 🎬 Live Video | Chainsaw Man dusk aesthetic with drifting cherry blossoms, rose quartz accents, and custom sakura filigree. |
-| **Hu Tao Spirit Bloom** | 🎬 Live Video | Genshin Impact twilight mood with glowing butterfly spirits, warm cinnabar/gold accents, and ghost ornaments. |
-| **Mitsuha Shooting Stars**| 🎬 Live Video | *Your Name* (Kimi no Na wa) night sky with shooting stars, twilight indigo and meteor violet glow. |
-| **Blue Sea Sunset** | 🎬 Live Video | Serene anime twilight ocean sunset with golden hour turquoise waves and calming nautical accents. |
-| **WLOP Cosmic** | 🖼️ Static 2K | Starlight violin illustration by WLOP on deep cosmic navy with royal gold flourishes. |
-| **Midnight Obsidian** | ⬛ Pure CSS | Ultra-light zero-asset pure CSS gradient dark theme for minimalists. |
+| Theme Name | Type | Accent | Description |
+| :--- | :---: | :---: | :--- |
+| **Reze Sakura Bloom** | 🎬 Live Video | `#f472b6` | Chainsaw Man twilight aesthetic with drifting cherry blossoms, rose quartz glass, and custom sakura filigree. |
+| **Hu Tao Spirit Bloom** | 🎬 Live Video | `#ef4444` | Genshin Impact twilight mood with glowing butterfly spirits, warm cinnabar/gold accents, and ghost ornaments. |
+| **Mitsuha Shooting Stars**| 🎬 Live Video | `#818cf8` | *Your Name* (*Kimi no Na wa*) night sky with shooting stars, twilight indigo gradients, and meteor violet glow. |
+| **Blue Sea Sunset** | 🎬 Live Video | `#38bdf8` | Serene anime twilight ocean sunset with golden hour turquoise waves and calming nautical accents. |
+| **WLOP Cosmic** | 🖼️ Static 2K | `#fbbf24` | High-contrast starlight violin illustration by WLOP on deep cosmic navy with royal gold flourishes. |
+| **Midnight Obsidian** | ⬛ Pure CSS | `#a78bfa` | Ultra-light zero-asset pure CSS gradient dark theme tailored for minimalists and low-spec systems. |
 
 ---
 
-## 📋 Prerequisites
+## 🏗️ Tech Stack & Architecture
 
-- **Antigravity** running with CDP debugging port active (`DevToolsActivePort`)
-- **Node.js >= 22** (uses native `globalThis.WebSocket`, zero `npm install` needed)
-- **Python 3.9+** (used to compile assets and payloads via `scripts/build_payload.py`)
-- *(Optional)* **FFmpeg** if transcoding custom 4K videos into lightweight 1080p MP4s
+### Technology Stack
+
+| Layer | Technologies | Purpose |
+| :--- | :--- | :--- |
+| **Runtime Daemon** | Node.js (>= 22), native `WebSocket` | High-performance CDP automation client without third-party npm dependencies |
+| **Compiler / Assets** | Python 3.9+, Pillow, FFmpeg | Automated raster compression to 2K WebP, base64 bundling, and MP4 optimization |
+| **Injection Engine** | Vanilla ES6+, MutationObserver, RAF | Zero-overhead DOM orchestration, pre-baked canvas glass filters, and streaming text hooks |
+| **Video Pipeline** | HTML5 `<video>`, Blob API, H.264/WebM | Low-latency in-memory video playback bypassing Chromium web security constraints |
+| **OS Automation** | Windows WMI / VBScript, LaunchAgents, systemd | Detached, resilient background auto-start surviving process crashes and restarts |
+
+### System Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph Antigravity ["Antigravity IDE (Chromium / Electron)"]
+        CDP["DevToolsActivePort (CDP Endpoint)"]
+        DOM["Antigravity DOM Shell (.agy-shell)"]
+        Video["HTML5 Hardware-Accelerated Video Layer"]
+        Typewriter["Claude-Style Typewriter Stream"]
+        Hole["Split-Browser Safe Cutout (clip-path)"]
+        Modal["Appearance Settings Modal"]
+    end
+
+    subgraph Daemon ["Theme Daemon (daemon/theme_daemon.js)"]
+        PortWatcher["Port Scanner & Watcher (1.5s interval)"]
+        WS["Native WebSocket CDP Client"]
+        HotReload["Payload Watcher (dist/theme_payload.js)"]
+        PIDLock["PID Lock Manager (daemon.pid)"]
+    end
+
+    subgraph Compiler ["Asset Compiler (scripts/build_payload.py)"]
+        Themes["themes/themes.json + assets/*"]
+        Core["engine/core.js"]
+        Payload["dist/theme_payload.js (Self-Contained)"]
+    end
+
+    Themes --> Compiler
+    Core --> Compiler
+    Compiler --> Payload
+    Payload -.->|Hot Reload Trigger| HotReload
+    CDP -->|Port Discovery| PortWatcher
+    PortWatcher --> WS
+    HotReload --> WS
+    WS -->|Page.addScriptToEvaluateOnNewDocument| DOM
+    WS -->|Runtime.evaluate| DOM
+    DOM --> Video
+    DOM --> Typewriter
+    DOM --> Hole
+    Modal -.->|Runtime.bindingCalled (agySaveThemeConfig)| Daemon
+    Daemon -.->|Persist Config| Config[theme_config.json]
+```
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Frictionless Quick Start (< 60s Setup)
 
-### 1. Build the Runtime Payload
+### Prerequisites
+
+- **Antigravity IDE** with CDP enabled (auto-configured by installer)
+- **Node.js >= 22.0.0** (with built-in native `WebSocket` support)
+- **Python >= 3.9** (with `Pillow` recommended for automated WebP compression)
+- *(Optional)* **FFmpeg** (if encoding custom video wallpapers)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/goateddhleminh/antigravity-custom-theme-skill.git
+cd antigravity-custom-theme-skill
+```
+
+### 2. Build the Theme Payload
+
+Compile `themes/themes.json` and `engine/core.js` into the self-contained bundle:
 
 ```bash
 python scripts/build_payload.py
 ```
 
-This resolves `themes/themes.json` + `themes/assets/*`, compresses images, encodes MP4 videos, and bundles everything with `engine/core.js` into the gitignored `dist/theme_payload.js`.
-
-### 2. Install & Run the Theme Daemon
-
-The daemon monitors `dist/theme_payload.js` and automatically hot-reloads Antigravity whenever you rebuild or modify a theme.
+### 3. Install & Start the Persistent Daemon
 
 #### Windows (PowerShell):
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/install-win.ps1
 ```
-
-- Registers dual persistent auto-start (Windows Startup folder + `HKCU\...\Run` registry key) so the daemon is always active on Windows logon.
-- Launches the daemon detached via WMI so it survives Antigravity app restarts and process crashes.
-- Automatically patches your Antigravity shortcuts with `--remote-debugging-port=0` if needed.
-- Pass `-NoStartup` if you only want to test in the current session.
+*Configures dual auto-start (`HKCU\...\Run` + `Startup` folder), patches `--remote-debugging-port=0` onto Antigravity shortcuts, and launches the daemon detached via WMI.*
 
 #### macOS / Linux (Bash):
-
 ```bash
 bash scripts/install-unix.sh
 ```
+*Registers a user-level `LaunchAgent` (macOS) or `systemd --user` unit (Linux) and starts the daemon in the background.*
 
-- On **macOS**, registers a `~/Library/LaunchAgents/io.antigravity.custom-theme.plist` LaunchAgent.
-- On **Linux**, registers a `systemd --user` service (or falls back to `nohup`).
-- Pass `--foreground` to run interactively in the current terminal.
+### 4. Verify Active Injection
 
-### 3. Verify Live via CDP
+Confirm that the theme is applied and zero performance rules are violated:
 
 ```bash
 node scripts/verify_cdp.js
 ```
 
-Runs diagnostic assertions against the active Antigravity window to verify that the theme is applied, video is playing, and zero live blur rules are violated.
+### 5. Clean Uninstall
 
-### 4. Clean Uninstall
+To completely revert to default Antigravity styling and remove all background services:
 
 ```bash
 node scripts/uninstall.js
 ```
 
-Stops the background daemon, removes startup entries, and immediately restores Antigravity's default styling.
+---
+
+## ⚙️ Environment Variables
+
+The theme daemon and scripts accept the following optional environment variables:
+
+| Variable | Type | Description | Default |
+| :--- | :---: | :--- | :--- |
+| `AGY_PORT_FILE` | `String` | Absolute path to the custom Antigravity `DevToolsActivePort` file | Auto-detected per OS |
+| `AGY_CONFIG_PATH` | `String` | Custom path to the user theme preference configuration JSON file | `./theme_config.json` |
+| `AGY_DAEMON_STDOUT` | `String` | Set to `1` to mirror all daemon log output to stdout in non-TTY sessions | `0` (Writes to `daemon.log`) |
 
 ---
 
 ## 🛠️ Adding Your Own Themes & Live Wallpapers
 
-### Adding a Live Video Wallpaper
+Adding new static or video wallpapers takes less than 2 minutes:
 
-1. **Optimize your video:** Ensure your MP4/WebM is encoded efficiently:
+1. **Optimize your video wallpaper (1080p, 30fps, 2–4MB target)**:
    ```bash
-   ffmpeg -i input.mp4 -vf "scale=1920:1080" -c:v libx264 -crf 23 -preset slow -an -movflags +faststart themes/assets/my_wallpaper_1080p.mp4
-   ```
-   *(Keep file size around 2–4MB for instantaneous in-memory loading).*
-
-2. **Generate a poster image:**
-   ```bash
-   ffmpeg -ss 00:00:01 -i themes/assets/my_wallpaper_1080p.mp4 -vframes 1 -q:v 2 themes/assets/my_wallpaper_poster.webp
+   ffmpeg -i my_video.mp4 -vf "scale=1920:1080" -c:v libx264 -crf 24 -preset medium -an -movflags +faststart themes/assets/my_theme_1080p.mp4
    ```
 
-3. **Add the entry in `themes/themes.json`:**
+2. **Extract a fallback poster frame**:
+   ```bash
+   ffmpeg -ss 00:00:01 -i themes/assets/my_theme_1080p.mp4 -vframes 1 -q:v 2 themes/assets/my_theme_poster.webp
+   ```
+
+3. **Declare the theme in `themes/themes.json`**:
    ```json
    {
      "My Custom Theme": {
-       "primary": "#38bdf8",
-       "secondary": "#818cf8",
-       "glow": "rgba(56, 189, 248, 0.35)",
-       "overlayRgb": "15, 23, 42",
-       "wallpaper": "assets/my_wallpaper_poster.webp",
-       "videoWallpaper": "assets/my_wallpaper_1080p.mp4",
+       "concept": "Minimalist Cyberpunk • Neon Cyan & Midnight Glass",
+       "primary": "#06b6d4",
+       "secondary": "#3b82f6",
+       "glow": "rgba(6, 182, 212, 0.35)",
+       "overlayRgb": "10, 15, 26",
+       "wallpaper": "assets/my_theme_poster.webp",
+       "videoWallpaper": "assets/my_theme_1080p.mp4",
        "bgPosition": "center center",
-       "bg": "rgba(15, 23, 42, 0.88)",
-       "frameBg": "linear-gradient(135deg, rgba(56, 189, 248, 0.75), rgba(129, 140, 248, 0.6))",
-       "sidebarBg": "rgba(15, 23, 42, 0.72)",
-       "aiCardBg": "rgba(30, 41, 59, 0.75)",
-       "headerBg": "rgba(15, 23, 42, 0.78)"
+       "bg": "linear-gradient(145deg, rgba(10, 15, 26, 0.90) 0%, rgba(5, 8, 15, 0.96) 100%)",
+       "frameBg": "linear-gradient(135deg, rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.6))",
+       "sidebarBg": "rgba(10, 15, 26, 0.30)",
+       "aiCardBg": "rgba(15, 23, 42, 0.75)",
+       "headerBg": "rgba(10, 15, 26, 0.30)"
      }
    }
    ```
 
-4. **Recompile the payload:**
+4. **Recompile the bundle**:
    ```bash
    python scripts/build_payload.py
    ```
-   *The running daemon will immediately detect the file change and hot-reload Antigravity.*
+   *The active daemon automatically detects the updated bundle and reloads your Antigravity window instantaneously.*
 
 ---
 
-## 🤖 Use as an Antigravity AI Skill (`SKILL.md`)
+## 🤖 Use as an Antigravity AI Skill
 
-This repository is fully compliant with the Antigravity Skill specification. To use it as an autonomous agent skill:
+This repository adheres directly to the Antigravity Skill specification (`SKILL.md`). You can install it into your agent's skill library:
 
-1. Clone or copy this repository into:
-   - **Global Skill Directory:** `~/.gemini/config/skills/antigravity-custom-theme/`
-   - **Workspace Skill Directory:** `.agents/skills/antigravity-custom-theme/`
-2. In your Antigravity chat, prompt your agent:
-   > *"Use antigravity-custom-theme to create a dark cyberpunk theme with cyan/magenta accents and an animated wallpaper from this video."*
-3. The agent will read `SKILL.md` + `references/theme-schema.md`, extract color tokens, stage files, build the payload, and verify live injection automatically.
-
----
-
-## 🔍 Troubleshooting
-
-### Theme Disappeared After an Antigravity Update
-
-Starting with **Antigravity v2.33.0+**, Antigravity requires the `--remote-debugging-port=0` flag to expose its DevTools port. The built-in auto-updater may relaunch `Antigravity.exe` without shortcut parameters.
-
-- **Windows:**
-  1. Re-run `powershell -ExecutionPolicy Bypass -File scripts/install-win.ps1` (patches the flag into all Start Menu and Desktop shortcuts).
-  2. **Quit Antigravity completely** (Right-click tray icon -> **Quit**).
-  3. Reopen Antigravity from the **Start Menu**.
-  4. If pinned to the **Taskbar**, unpin and re-pin the new shortcut from the Start Menu.
-- **macOS / Linux:**
-  - Launch with `--remote-debugging-port=0`:
-    - macOS: `open -a Antigravity --args --remote-debugging-port=0`
-    - Linux: Append `--remote-debugging-port=0` to the `Exec=` line in `~/.local/share/applications/antigravity.desktop`.
+1. Link or clone into your skills directory:
+   - **Global Skill Directory**: `~/.gemini/config/skills/antigravity-custom-theme/`
+   - **Workspace Directory**: `.agents/skills/antigravity-custom-theme/`
+2. Command your agent naturally:
+   > *"Use antigravity-custom-theme to generate a dark luxury aesthetic theme using an electric emerald palette and this uploaded video wallpaper."*
+3. The agent will read `SKILL.md` and `references/theme-schema.md`, extract primary color tokens, compile the payload, and verify CDP injection autonomously.
 
 ---
 
-## 📂 Repository Layout
+## 📂 Project Directory Tree
 
 ```text
 antigravity-custom-theme-skill/
-├── SKILL.md                    # Antigravity AI Agent Skill definition
-├── README.md                   # Documentation & setup guide
-├── LICENSE                     # MIT License
+├── SKILL.md                    # Antigravity AI Agent Skill declaration & guidelines
+├── README.md                   # Comprehensive architectural documentation & user guide
+├── LICENSE                     # MIT Open Source License
+├── theme_config.json           # Active user theme state & runtime preferences
 ├── references/
-│   └── theme-schema.md         # Full themes.json key reference & guidelines
+│   └── theme-schema.md         # Full themes.json key reference & styling guidelines
 ├── themes/
-│   ├── themes.json             # Theme definitions & palettes
+│   ├── themes.json             # Theme definitions, color palettes & asset mappings
 │   └── assets/                 # Video wallpapers (.mp4), posters (.webp), avatars, SVGs
 ├── engine/
-│   └── core.js                 # Core DOM injection engine, auto-pause & typewriter stream
+│   └── core.js                 # Core DOM injection engine, RAM auto-pause & typewriter stream
 ├── daemon/
-│   └── theme_daemon.js         # Cross-platform Node.js CDP injector & watcher
+│   └── theme_daemon.js         # Cross-platform Node.js (>= 22) CDP watcher & hot reloader
 ├── scripts/
 │   ├── build_payload.py        # Compiles themes.json + core.js -> dist/theme_payload.js
-│   ├── install-win.ps1         # Windows startup installation script
-│   ├── install-unix.sh         # macOS LaunchAgent / Linux systemd installer
-│   ├── uninstall.js            # Clean removal script
-│   └── verify_cdp.js           # Live CDP test & verification script
-└── dist/                       # Compiled runtime output (gitignored)
+│   ├── install-win.ps1         # Windows dual-boot persistent installer (WMI + Registry)
+│   ├── install-unix.sh         # macOS LaunchAgent & Linux systemd installer
+│   ├── uninstall.js            # Clean removal script restoring default styling
+│   └── verify_cdp.js           # Headless CDP test runner & zero-blur verifier
+└── dist/                       # Compiled runtime output bundle (gitignored)
+    └── theme_payload.js
 ```
+
+---
+
+## 🗺️ Roadmap & Milestones
+
+- [x] **Zero Live Blur Architecture**: High-speed pre-baked canvas glass textures.
+- [x] **Hardware-Accelerated HTML5 Video**: In-memory Blob streaming for 60fps live wallpapers.
+- [x] **Smart RAM Auto-Pause**: Dynamic activity tracking pausing playback when unfocused or minimized.
+- [x] **Claude-Style Typewriter Engine**: Organic flowing cascade with pulsing accent cursor for AI text.
+- [x] **Permanent Windows & Unix Persistence**: Independent detached daemons surviving app updates.
+- [x] **Split-Browser Protection**: Automatic `clip-path` masking for integrated Chromium preview views.
+- [ ] **Audio-Reactive Visualizers**: Dynamic particle fields reacting to system audio frequencies.
+- [ ] **Interactive Theme Builder GUI**: Real-time in-app palette editor and CSS variable playground.
+- [ ] **Community Theme Registry**: Direct CLI command to browse and install themes from the cloud.
+
+---
+
+## 🤝 Contributing
+
+Contributions from the developer and design community are enthusiastically welcomed!
+
+1. **Fork the Repository**: Click the `Fork` button at the top right of this repository.
+2. **Create a Feature Branch**:
+   ```bash
+   git checkout -b feature/amazing-theme
+   ```
+3. **Commit Your Changes**: Follow Conventional Commits:
+   ```bash
+   git commit -m "feat(themes): add Synthwave Sunset live wallpaper theme"
+   ```
+4. **Push to the Branch**:
+   ```bash
+   git push origin feature/amazing-theme
+   ```
+5. **Open a Pull Request**: Submit your PR with a screenshot or short video preview!
 
 ---
 
 ## 📄 License
 
-Distributed under the [MIT License](LICENSE).
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for complete details.
+
+---
+
+<div align="center">
+  <sub>Engineered with precision for the modern Antigravity workspace. Built by developers, for developers.</sub>
+</div>
