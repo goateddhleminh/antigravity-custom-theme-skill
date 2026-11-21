@@ -101,17 +101,17 @@ flowchart TD
     Themes --> Compiler
     Core --> Compiler
     Compiler --> Payload
-    Payload -.->|Hot Reload Trigger| HotReload
-    CDP -->|Port Discovery| PortWatcher
+    Payload -.->|"Hot Reload Trigger"| HotReload
+    CDP -->|"Port Discovery"| PortWatcher
     PortWatcher --> WS
     HotReload --> WS
-    WS -->|Page.addScriptToEvaluateOnNewDocument| DOM
-    WS -->|Runtime.evaluate| DOM
+    WS -->|"Page.addScriptToEvaluateOnNewDocument"| DOM
+    WS -->|"Runtime.evaluate"| DOM
     DOM --> Video
     DOM --> Typewriter
     DOM --> Hole
-    Modal -.->|Runtime.bindingCalled (agySaveThemeConfig)| Daemon
-    Daemon -.->|Persist Config| Config[theme_config.json]
+    Modal -.->|"Runtime.bindingCalled: agySaveThemeConfig"| Daemon
+    Daemon -.->|"Persist Config"| Config["theme_config.json"]
 ```
 
 ---
